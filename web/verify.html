@@ -1,0 +1,51 @@
+<script>
+  const checkbox = document.getElementById('acceptCheckbox');
+  const verifyButton = document.getElementById('verifyButton');
+
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+
+  checkbox.addEventListener('change', () => {
+    verifyButton.disabled = !checkbox.checked;
+  });
+
+  verifyButton.addEventListener('click', async () => {
+    if (!token) {
+      alert(
+        'No verification token was found in the link.\nPlease start verification again from the Emirates Airlines Unified Discord server.'
+      );
+      return;
+    }
+
+    verifyButton.disabled = true;
+    verifyButton.textContent = 'Processing...';
+
+    try {
+      const response = await fetch('/api/verify/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || 'Server error');
+      }
+
+      const data = await response.json();
+      if (!data.ok) {
+        throw new Error(data.error || 'Unknown error');
+      }
+
+      verifyButton.textContent = '✔ Verified';
+      alert('✅ Verification complete. You may now return to Discord.');
+    } catch (err) {
+      console.error(err);
+      verifyButton.disabled = false;
+      verifyButton.textContent = '✔ Accept & Complete Verification';
+      alert(
+        '❌ An error occurred while processing verification.\nPlease try again or contact the Technology Systems (IT) Department.'
+      );
+    }
+  });
+</script>
